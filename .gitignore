@@ -1,0 +1,26 @@
+# Java
+backend/target/
+backend/.idea/
+*.class
+*.jar
+*.war
+*.iml
+
+# Node
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+
+# Env / secrets
+.env
+.env.local
+*.local
+
+# OS
+Thumbs.db
+.DS_Store
+
+# IDE
+.idea/
+.vscode/
+*.log
