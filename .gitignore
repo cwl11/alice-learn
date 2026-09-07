@@ -10,11 +10,15 @@ backend/.idea/
 frontend/node_modules/
 frontend/dist/
 frontend/.vite/
+frontend/*.tsbuildinfo
 
 # Env / secrets
-.env
+# backend/.env 是不含真实密钥的模板，允许提交；真实值放 .env.local
 .env.local
+.env.*.local
 *.local
+**/*.pem
+**/*.key
 
 # OS
 Thumbs.db

@@ -4,21 +4,17 @@ import lombok.Data;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Data
-public class EssayDetailResponse {
+public class EssaySummaryResponse {
 
     private Long id;
     private Long taskId;
     private String taskTitle;
     private String taskType;
-    private String taskDescription;
-    private String content;
     private Integer wordCount;
     private String status;
-    private String sampleEssay;
+    private BigDecimal overallScore;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-    private EssayReviewResponse review;
 }

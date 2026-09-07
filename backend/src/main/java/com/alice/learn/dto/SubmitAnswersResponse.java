@@ -7,6 +7,7 @@ import java.util.List;
 @Data
 public class SubmitAnswersResponse {
 
+    private Long attemptId;
     private int total;
     private int correctCount;
     private List<Item> items;

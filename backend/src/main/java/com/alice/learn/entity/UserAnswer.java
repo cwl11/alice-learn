@@ -15,6 +15,7 @@ public class UserAnswer {
     private Long id;
     private Long userId;
     private Long questionId;
+    private Long attemptId;
     private String answer;
     private Boolean isCorrect;
     private LocalDateTime createdAt;

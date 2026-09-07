@@ -32,13 +32,29 @@ export interface WritingTask {
   difficulty: string
 }
 
+export type EssayStatus = 'DRAFT' | 'SUBMITTED' | 'REVIEWED'
+
 export interface Essay {
   id: number
   taskId: number
   content: string
   wordCount: number
-  status: string
+  status: EssayStatus
+  sampleEssay?: string | null
   createdAt: string
+  updatedAt: string
+}
+
+export interface EssaySummary {
+  id: number
+  taskId: number
+  taskTitle: string
+  taskType?: string
+  wordCount: number
+  status: EssayStatus
+  overallScore?: number | null
+  createdAt: string
+  updatedAt: string
 }
 
 export interface FeedbackItem {
@@ -68,8 +84,10 @@ export interface EssayDetail {
   taskDescription: string
   content: string
   wordCount: number
-  status: string
+  status: EssayStatus
+  sampleEssay?: string | null
   createdAt: string
+  updatedAt: string
   review?: EssayReview
 }
 
@@ -101,14 +119,29 @@ export interface ReadingQuestion {
   explanation?: string
 }
 
+export interface AnswerResultItem {
+  questionId: number
+  userAnswer: string
+  correctAnswer: string
+  correct: boolean
+  explanation: string
+}
+
 export interface SubmitAnswersResponse {
+  attemptId: number
   total: number
   correctCount: number
-  items: {
-    questionId: number
-    userAnswer: string
-    correctAnswer: string
-    correct: boolean
-    explanation: string
-  }[]
+  items: AnswerResultItem[]
+}
+
+export interface ReadingAttempt {
+  id: number
+  passageId: number
+  passageTitle: string
+  difficulty?: string
+  total: number
+  correctCount: number
+  timeSpentSec?: number | null
+  createdAt: string
+  items?: AnswerResultItem[]
 }
