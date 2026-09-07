@@ -3,6 +3,7 @@ package com.alice.learn.controller;
 import com.alice.learn.common.PageResult;
 import com.alice.learn.common.Result;
 import com.alice.learn.common.SecurityUtils;
+import com.alice.learn.dto.ReadingAttemptResponse;
 import com.alice.learn.dto.ReadingPassageResponse;
 import com.alice.learn.dto.SubmitAnswersRequest;
 import com.alice.learn.dto.SubmitAnswersResponse;
@@ -44,9 +45,15 @@ public class ReadingController {
         return Result.ok(readingService.getPassage(id, false));
     }
 
-    @Operation(summary = "提交阅读答案")
+    @Operation(summary = "提交阅读答案（生成一条练习记录）")
     @PostMapping("/answers")
     public Result<SubmitAnswersResponse> submit(@Valid @RequestBody SubmitAnswersRequest request) {
         return Result.ok(readingService.submit(SecurityUtils.requireUserId(), request));
+    }
+
+    @Operation(summary = "练习记录详情（含每题作答与解析）")
+    @GetMapping("/attempts/{id}")
+    public Result<ReadingAttemptResponse> attempt(@PathVariable Long id) {
+        return Result.ok(readingService.getAttempt(SecurityUtils.requireUserId(), id));
     }
 }

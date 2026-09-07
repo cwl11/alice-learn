@@ -2,13 +2,20 @@
   <div class="page">
     <div class="toolbar">
       <h1>写作题库</h1>
-      <el-radio-group v-model="taskType" @change="load">
+      <el-radio-group v-model="taskType" @change="page = 1; load()">
         <el-radio-button value="">全部</el-radio-button>
         <el-radio-button value="TASK_1">Task 1</el-radio-button>
         <el-radio-button value="TASK_2">Task 2</el-radio-button>
       </el-radio-group>
     </div>
-    <el-skeleton :loading="loading" animated :rows="6">
+    <AsyncState
+      :loading="loading"
+      :error="error"
+      :empty="!tasks.length"
+      empty-text="这个分类下暂无题目"
+      :rows="6"
+      @retry="load"
+    >
       <div class="list">
         <article v-for="task in tasks" :key="task.id" class="card item">
           <div>
@@ -20,7 +27,7 @@
           <el-button type="primary" @click="router.push(`/writing/${task.id}`)">开始写作</el-button>
         </article>
       </div>
-    </el-skeleton>
+    </AsyncState>
     <el-pagination
       v-if="total > size"
       class="pager"
@@ -36,6 +43,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import AsyncState from '../components/AsyncState.vue'
 import { writingApi } from '../api'
 import type { WritingTask } from '../types'
 
@@ -46,9 +54,11 @@ const page = ref(1)
 const size = 8
 const taskType = ref('')
 const loading = ref(false)
+const error = ref<string | null>(null)
 
 async function load() {
   loading.value = true
+  error.value = null
   try {
     const res = await writingApi.tasks({
       page: page.value,
@@ -57,6 +67,8 @@ async function load() {
     })
     tasks.value = res.data.records
     total.value = res.data.total
+  } catch (e) {
+    error.value = (e as Error).message
   } finally {
     loading.value = false
   }

@@ -8,17 +8,15 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 @Data
-@TableName("essay")
-public class Essay {
+@TableName("reading_attempt")
+public class ReadingAttempt {
 
     @TableId(type = IdType.AUTO)
     private Long id;
     private Long userId;
-    private Long taskId;
-    private String content;
-    private Integer wordCount;
-    private String status;
-    private String sampleEssay;
+    private Long passageId;
+    private Integer total;
+    private Integer correctCount;
+    private Integer timeSpentSec;
     private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
 }

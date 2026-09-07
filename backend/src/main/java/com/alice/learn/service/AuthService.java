@@ -9,6 +9,7 @@ import com.alice.learn.entity.User;
 import com.alice.learn.mapper.UserMapper;
 import com.alice.learn.security.JwtUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -33,13 +34,24 @@ public class AuthService {
         if (count != null && count > 0) {
             throw new BusinessException("用户名已存在");
         }
+        String email = request.getEmail().trim().toLowerCase();
+        Long emailCount = userMapper.selectCount(new LambdaQueryWrapper<User>()
+                .eq(User::getEmail, email));
+        if (emailCount != null && emailCount > 0) {
+            throw new BusinessException("该邮箱已被注册");
+        }
         User user = new User();
         user.setUsername(request.getUsername());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
-        user.setEmail(request.getEmail());
+        user.setEmail(email);
         user.setTargetScore(request.getTargetScore());
         user.setCreatedAt(LocalDateTime.now());
-        userMapper.insert(user);
+        try {
+            userMapper.insert(user);
+        } catch (DuplicateKeyException ex) {
+            // 并发注册时兜底：唯一键冲突
+            throw new BusinessException("用户名或邮箱已被注册");
+        }
     }
 
     public LoginResponse login(LoginRequest request) {

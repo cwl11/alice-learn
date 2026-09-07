@@ -1,13 +1,19 @@
 server:
-  port: 8080
+  port: ${SERVER_PORT:8080}
 
 spring:
   application:
     name: alice-learn
+  # 敏感配置从 .env / .env.local 读取（相对后端工作目录），后者覆盖前者，OS 环境变量优先级最高。
+  # .env 是提交到 Git 的模板；.env.local 已被 .gitignore 忽略。
+  config:
+    import:
+      - optional:file:.env[.properties]
+      - optional:file:.env.local[.properties]
   datasource:
-    url: jdbc:mysql://localhost:3306/alice_learn?createDatabaseIfNotExist=true&useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useSSL=false
-    username: root
-    password: root
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:alice_learn}?createDatabaseIfNotExist=true&useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useSSL=false
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD}
   flyway:
     enabled: true
     locations: classpath:db/migration
@@ -19,11 +25,14 @@ spring:
   ai:
     openai:
       api-key: ${DEEPSEEK_API_KEY:sk-not-configured}
-      base-url: https://api.deepseek.com
+      base-url: ${AI_BASE_URL:https://api.deepseek.com}
       chat:
         options:
-          model: deepseek-chat
-          temperature: 0.7
+          # deepseek-chat / deepseek-reasoner 旧别名已于 2026-07-24 下线，现役为 deepseek-v4-flash（便宜）/ deepseek-v4-pro
+          model: ${AI_MODEL:deepseek-v4-flash}
+          temperature: ${AI_TEMPERATURE:0.7}
+          # 批改是 JSON 输出，范文约 300 词；给个上限防止异常长输出把钱烧掉
+          max-tokens: ${AI_MAX_TOKENS:2000}
 
 mybatis-plus:
   configuration:
@@ -52,8 +61,11 @@ springdoc:
       packages-to-scan: com.alice.learn.controller
 
 alice:
+  ai:
+    # DeepSeek V4 thinking 模式开关，默认关（省钱、流式更快）
+    thinking: ${AI_THINKING:false}
   jwt:
-    secret: alice-learn-dev-jwt-secret-key-please-change-32b
-    expire-hours: 72
+    secret: ${JWT_SECRET}
+    expire-hours: ${JWT_EXPIRE_HOURS:72}
   cors:
-    allowed-origins: http://localhost:5173
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173}

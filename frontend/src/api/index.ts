@@ -4,8 +4,10 @@ import type {
   Essay,
   EssayDetail,
   EssayReview,
+  EssaySummary,
   LoginResponse,
   PageResult,
+  ReadingAttempt,
   ReadingPassage,
   SubmitAnswersResponse,
   UserProfile,
@@ -32,8 +34,17 @@ export const writingApi = {
   task(id: number) {
     return http.get<unknown, ApiResult<WritingTask>>(`/writing/tasks/${id}`)
   },
+  latestDraft(taskId: number) {
+    return http.get<unknown, ApiResult<Essay | null>>(`/writing/tasks/${taskId}/draft`)
+  },
   saveEssay(data: { taskId: number; content: string; submit: boolean }) {
     return http.post<unknown, ApiResult<Essay>>('/writing/essays', data)
+  },
+  updateEssay(id: number, data: { content: string; submit: boolean }) {
+    return http.put<unknown, ApiResult<Essay>>(`/writing/essays/${id}`, data)
+  },
+  deleteEssay(id: number) {
+    return http.delete<unknown, ApiResult<void>>(`/writing/essays/${id}`)
   },
   essay(id: number) {
     return http.get<unknown, ApiResult<EssayDetail>>(`/writing/essays/${id}`)
@@ -44,8 +55,11 @@ export const writingApi = {
 }
 
 export const meApi = {
-  essays(params: { page?: number; size?: number }) {
-    return http.get<unknown, ApiResult<PageResult<Essay>>>('/me/essays', { params })
+  essays(params: { page?: number; size?: number; status?: string }) {
+    return http.get<unknown, ApiResult<PageResult<EssaySummary>>>('/me/essays', { params })
+  },
+  reading(params: { page?: number; size?: number }) {
+    return http.get<unknown, ApiResult<PageResult<ReadingAttempt>>>('/me/reading', { params })
   },
 }
 
@@ -77,7 +91,14 @@ export const readingApi = {
   passage(id: number) {
     return http.get<unknown, ApiResult<ReadingPassage>>(`/reading/passages/${id}`)
   },
-  submit(answers: { questionId: number; answer: string }[]) {
-    return http.post<unknown, ApiResult<SubmitAnswersResponse>>('/reading/answers', { answers })
+  submit(data: {
+    passageId: number
+    timeSpentSec?: number
+    answers: { questionId: number; answer: string }[]
+  }) {
+    return http.post<unknown, ApiResult<SubmitAnswersResponse>>('/reading/answers', data)
+  },
+  attempt(id: number) {
+    return http.get<unknown, ApiResult<ReadingAttempt>>(`/reading/attempts/${id}`)
   },
 }

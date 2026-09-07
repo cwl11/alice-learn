@@ -68,12 +68,8 @@ a,
   padding: 20px;
 }
 
-.card {
-  background: var(--color-card);
-  border: 1px solid var(--color-border);
-  border-radius: 20px;
-  box-shadow: var(--shadow-card);
-  padding: 20px;
+.muted {
+  color: var(--color-muted);
 }
 
 .auth-page {

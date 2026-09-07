@@ -12,6 +12,8 @@ import com.alice.learn.mapper.AiCallLogMapper;
 import com.alice.learn.mapper.EssayMapper;
 import com.alice.learn.mapper.EssayReviewMapper;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.beans.factory.annotation.Value;
@@ -24,6 +26,8 @@ import java.time.LocalDateTime;
 
 @Service
 public class AiWritingService {
+
+    private static final Logger LOG = LoggerFactory.getLogger(AiWritingService.class);
 
     private final ChatClient chatClient;
     private final WritingService writingService;
@@ -69,6 +73,7 @@ public class AiWritingService {
                 task.getDescription());
 
         SseEmitter emitter = new SseEmitter(180_000L);
+        StringBuilder collected = new StringBuilder();
         chatClient.prompt()
                 .user(prompt)
                 .stream()
@@ -77,6 +82,7 @@ public class AiWritingService {
                 .subscribe(
                         chunk -> {
                             try {
+                                collected.append(chunk);
                                 emitter.send(SseEmitter.event().data(chunk, MediaType.TEXT_PLAIN));
                             } catch (Exception ex) {
                                 emitter.completeWithError(ex);
@@ -84,15 +90,25 @@ public class AiWritingService {
                         },
                         error -> {
                             try {
-                                emitter.send(SseEmitter.event().name("error").data(error.getMessage()));
+                                emitter.send(SseEmitter.event().name("error")
+                                        .data(describeAiError(error), MediaType.TEXT_PLAIN));
                             } catch (Exception ignored) {
                                 // ignore
                             }
-                            emitter.completeWithError(error);
+                            emitter.complete();
                         },
                         () -> {
-                            logCall(userId, "GENERATE_SAMPLE", null, null);
-                            emitter.complete();
+                            try {
+                                if (!collected.isEmpty()) {
+                                    writingService.saveSampleEssay(essayId, collected.toString());
+                                }
+                                logCall(userId, "GENERATE_SAMPLE", null, null);
+                            } catch (Exception ex) {
+                                LOG.warn("范文已生成但落库/记日志失败 essayId={}", essayId, ex);
+                            } finally {
+                                // 无论落库是否成功都要结束流，否则前端会一直 loading
+                                emitter.complete();
+                            }
                         });
         return emitter;
     }
@@ -168,6 +184,27 @@ public class AiWritingService {
         essayMapper.updateById(essay);
         logCall(userId, "REVIEW_ESSAY", null, null);
         return writingService.toReviewResponse(review);
+    }
+
+    /** 把 DeepSeek / 网络层的原始异常翻译成用户能看懂的一句话。 */
+    static String describeAiError(Throwable error) {
+        String raw = error == null || error.getMessage() == null ? "" : error.getMessage();
+        if (raw.contains("401")) {
+            return "DeepSeek 拒绝了 API Key（401），请检查 .env.local 里的 DEEPSEEK_API_KEY";
+        }
+        if (raw.contains("402")) {
+            return "DeepSeek 账户余额不足（402），请前往控制台充值";
+        }
+        if (raw.contains("429")) {
+            return "DeepSeek 请求过于频繁（429），请稍后再试";
+        }
+        if (raw.contains("Model Not Exist") || raw.contains("model_not_found")) {
+            return "模型名不存在，请检查 AI_MODEL 配置（现役为 deepseek-v4-flash / deepseek-v4-pro）";
+        }
+        if (raw.contains("timeout") || raw.contains("Timeout")) {
+            return "调用 DeepSeek 超时，请稍后重试";
+        }
+        return raw.isBlank() ? "AI 服务调用失败，请稍后重试" : "AI 服务调用失败：" + raw;
     }
 
     private void ensureConfigured() {
